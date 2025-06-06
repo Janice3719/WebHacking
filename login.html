@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<style>
+    table {
+        width: 280px;
+        height: 250px;
+        margin: auto;
+        font-size: 15px;
+        }
+    input[type="text"], input[type="password"] {
+        width: 250px;
+        height: 32px;
+        font-size: 15px;
+        border: 0;
+        border-radius: 15px;
+        outline: none;
+        padding-left: 10px;
+        background-color: rgb(233,233,233);
+    }
+    .btn {
+        width: 263px;
+        height: 32px;
+        font-size: 15px;
+        border: 0;
+        border-radius: 15px;
+        outline: none;
+        padding-left: 10px;
+        background-color:  #87a86f;
+    }
+    .btn:active {
+        background-color:  #99bb85;
+    }
+    .join {
+        text-align: center;
+        padding-top: 10px;
+    }
+    .join a {
+        color: #576b4c;
+        text-decoration: none;
+    }
+    .header {
+        margin-top:48px;
+        text-align: center;
+        font-size:20px;
+        letter-spacing:1px;
+    }
+</style>
+<style>
+.help-slide { display: none; }
+.help-slide.active { display: block; }
+.db-table {
+  border-collapse: collapse;
+  margin: 24px auto 30px auto;
+  min-width: 600px;
+  background: #f6fff6;
+  box-shadow: 0 2px 8px #d4efd4a0;
+  font-size: 15px;
+  border: 1.5px solid #95d690;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.db-table th {
+  background: #abeda4;
+  color: #225728;
+  padding: 9px 12px;
+  border-bottom: 2px solid #97db85;
+  letter-spacing: 1px;
+}
+.db-table td {
+  padding: 8px 12px;
+  text-align: center;
+  border-bottom: 1px solid #d1eed1;
+  color: #2e6333;
+  word-break:break-all;
+}
+.db-table tr:last-child td {
+  border-bottom: none;
+}
+.slide-btns {
+  text-align: center;
+  margin-top: 8px;
+}
+.slide-btns button {
+  margin: 0 3px;
+  padding: 4px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #bfe9a3;
+  color: #1c366b;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.slide-btns button:active {
+  background: #bfe9a3;
+  color: #fff;
+}
+.slide-btns button:disabled {
+  background: #d2ecc2c1;
+  color: #b2bfd7;
+  cursor: not-allowed;
+}
+.helpbox {
+  width: 530px;
+  margin: 38px auto 28px auto;
+  background: #e3ffd1c1;
+  border-radius: 13px;
+  padding: 18px 24px 6px 24px;
+  box-shadow: 0 2px 7px rgba(146, 255, 100, 0.07);
+}
+.helpbox h3 {
+  margin:0 0 8px 0;
+}
+.helpbox ul {
+  padding-left:15px;
+  margin:0;
+  color:#3c5c2a;
+}
+.helpbox code {
+  background: #c4ebbc;
+  border-radius: 4px;
+  padding: 0 3px;
+}
+form {
+  border: 2px solid rgb(8, 45, 2);
+  width: 500px;
+  margin: 0 auto;
+}
+
+</style>
+</head>
+<body>
+
+<!-- 슬라이드 도움말 START -->
+<div class="helpbox">
+  <div class="help-slide active" id="slide1">
+    <h3>🔰 초보자를 위한 도움말</h3>
+    <ul>
+      <li>
+        <b>SQL Injection 이란?</b> 사용자가 입력한 값을 서버에서 검증하지 않고 데이터베이스 쿼리 일부분으로 인식하여 데이터베이스의 정보가 노출되거나 인증이 우회되는 취약점이에요.<br>
+       <br>
+      </li>
+      <b>🔑 SQL 인젝션 실습 안내:</b><br>
+        1. 평범하게 회원이름으로 검색하면 해당 회원이름만 나옵니다.<br>
+        2. <b><code>' OR 1=1 --</code></b>를 입력해 보세요.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;모든 회원 정보가 다 나옵니다 (=SQL 인젝션 성공).<br>
+        3. 실제 SQL 쿼리가 어떻게 만들어지는지 확인하세요.<br>
+        <br>
+        <b>실제 서비스에서는 이렇게 입력값을 직접 SQL에 넣으면 <span style="color:red;">절대 안 됩니다!</span></b>
+    </ul>
+  </div>
+
+
+
+
+  <div class="help-slide" id="slide2">
+    <h3>🔒 SQL Injection 이렇게 막으세요!</h3>
+    <ul>
+      <li><b>1. <code>mysql_real_escape_string</code>함수를 사용해 입력한 데이터를 우회하기</b><br>
+        특수문자가 있을 경우에 백슬래시를 붙여 입력 데이터를 SQL문법으로 인식하지 않게 방어합니다.<br>
+        여기서 우회하는 문자는 <b>'NULL , \n , \r , \ , ' , " , ^Z</b>이므로 작은 따옴표를 입력하면 백슬래시가 붙어 SQL 쿼리로 인식하지 않아요.
+      </li>
+    </ul>
+  </div>
+  <div class="slide-btns">
+    <button onclick="showSlide(0)" id="prevBtn" disabled>&lt; 이전</button>
+    <button onclick="showSlide(1)" id="nextBtn">&gt; 다음</button>
+  </div>
+</div>
+<!-- 슬라이드 도움말 END -->
+
+<!-- 로그인 폼 START -->
+<form method="post">
+    <table>
+         <td><h2>로그인</h2></td>
+        <tr>
+            <td><input type="text" name="username" placeholder="아이디"></td>
+        </tr>
+        <tr>
+            <td><input type="password" name="password" placeholder="비밀번호"></td>
+        </tr>
+        <tr>
+            <td>
+                <input class="btn" type="submit" value="로그인">
+            </td>
+        </tr>
+        <tr>
+            <td class="join"><a href="join.html">회원가입</a></td>
+        </tr>
+    </table>
+</form>
+<!-- 로그인 폼 END -->
+
+
+<!-- 회원 데이터 테이블 START -->
+<div class="header">
+  <h1>현재 회원 데이터베이스</h1>
+  <!-- 회원 데이터 검색박스 (추가됨) -->
+<div class="searchbox" style="text-align:center; margin-top:18px;">
+  
+  <input type="text" id="searchInput" style="padding:5px 8px; border-radius:5px; border:1.2px solid #abd7a9;" placeholder="검색어 입력">
+ <select id="searchField" style="padding:4px 8px; border-radius:5px; border:1px solid #abd7a9;">
+    <option value="0">회원이름</option>
+    <option value="1">비밀번호</option>
+    <option value="2">이메일</option>
+  </select>
+  <button onclick="searchTable()" style="background:#abeda4; color:#225728; border:none; padding:5px 18px; border-radius:7px; cursor:pointer; font-size:15px;">확인</button>
+</div>
+
+</div>
+<div class="content">
+  <table class="db-table">
+    <thead>
+      <tr>
+        <th>회원이름(ID)</th>
+        <th>비밀번호</th>
+        <th>이메일</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>hong</td>
+        <td>hongpass123</td>
+        <td>hong@sample.com</td>
+      </tr>
+      <tr>
+        <td>kim22</td>
+        <td>kimpw2024</td>
+        <td>kim22@sample.com</td>
+      </tr>
+      <tr>
+        <td>lee33</td>
+        <td>leeBest!</td>
+        <td>lee33@sample.com</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<!-- 회원 데이터 테이블 END -->
+
+<script>
+let currentSlide = 0;
+function showSlide(idx) {
+  const slides = document.querySelectorAll('.help-slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  slides.forEach(slide => slide.classList.remove('active'));
+  slides[idx].classList.add('active');
+  currentSlide = idx;
+  prevBtn.disabled = (idx === 0);
+  nextBtn.disabled = (idx === slides.length - 1);
+}
+
+// 회원 데이터 테이블 검색 필터 (+SQL Injection 취약점 "실감" 구현)
+function searchTable() {
+  var col = document.getElementById('searchField').value;
+  var q = document.getElementById('searchInput').value.trim().toLowerCase();
+  var table = document.querySelector('.db-table tbody');
+  var tr = table.getElementsByTagName('tr');
+
+  // === SQL Injection 효과 흉내 (검색어에 'or 1=1' 등 있으면 전체 공개) ===
+  if (q.includes("or 1=1") || q.includes("or%201=1")) {
+    for (let i = 0; i < tr.length; i++) tr[i].style.display = "";
+    alert("SQL Injection 공격 성공! 모든 데이터가 노출되었습니다.");
+    return;
+  }
+  // ==========================================================
+
+  for (let i=0; i<tr.length; i++) tr[i].style.display="";
+  if(q==="") return;
+  for (let i=0; i<tr.length; i++) {
+    var td = tr[i].getElementsByTagName('td')[col];
+    if (td) {
+      var target = td.textContent || td.innerText;
+      if (target.toLowerCase().indexOf(q) === -1)
+        tr[i].style.display="none";
+    }
+  }
+}
+</script>
+
+</body>
+</html>

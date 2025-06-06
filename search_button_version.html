@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>XSS 실습 게시판 (이벤트 기반 XSS 실습 가능!)</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700&display=swap" rel="stylesheet">
+  <style>
+body {
+  background: #f9fafb;
+  font-family: 'Montserrat', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  color: #2e2a45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.board-container {
+  max-width: 720px;
+  width: 100%;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(60,72,112,0.13);
+  border-radius: 18px;
+  padding: 32px 36px 28px 36px;
+  margin-top: 36px;
+}
+.board-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.board-desc {
+  color: #778;
+  margin-bottom: 22px;
+}
+.board-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.board-search input {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1.4px solid #bacBE3;
+  border-radius: 8px;
+  font-size: 17px;
+}
+.board-search button {
+  padding: 0 19px;
+  height: 42px;
+  border: none;
+  background: linear-gradient(90deg,#7268e5 55%, #a187f9 95%);
+  color: #fff; font-weight: bold;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.board-search button:hover {
+  background: #594eb7;
+}
+.write-button {
+  background: #307fd2;
+  padding: 8px 20px;
+  border-radius: 7px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  float: right;
+  margin-bottom: 20px;
+  margin-top: 2px;
+}
+.board-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.board-table th, .board-table td {
+  padding: 12px 10px;
+}
+.board-table th {
+  text-align: left;
+  background: #edeffe;
+  color: #566;
+  font-size: 1.08rem;
+}
+.board-table tr {
+  border-bottom: 1px solid #eae9f9;
+}
+.board-table td {
+  color: #373451;
+  font-size: 1.03rem;
+}
+.board-table .title {
+  color: #5946d2;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.board-table .writer {
+  color: #7268e5;
+}
+@media (max-width: 830px) {
+  .board-container { width:95%; padding: 14px 2vw}
+  .board-title {font-size: 1.1rem}
+}
+.helpbox {
+  max-width: 400px;
+  width: 90%;
+  background: #faf9ff;
+  box-shadow: 0 3px 12px #7f80ff25;
+  border-radius: 13px;
+  font-size: 1.05rem;
+  margin: 24px auto 0;
+  padding: 18px 21px 8px 21px;
+}
+.helpbox h3 {
+  margin-top: 0;
+  font-size: 1.13em;
+  color: #3b2e7d;
+}
+.helpbox code {
+  background: #eeeeff;
+  border-radius: 5px;
+  color: #3e1b86;
+  padding: 1px 6px;
+  font-weight: bold;
+}
+.helpbox li {
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.helpbox button {
+  background:#e4dcff;
+  border-radius: 7px;
+  border: none;
+  color: #5940cf;
+  padding:5px 15px;
+  margin-top: 12px;
+  font-weight: bold;
+  cursor:pointer;
+  margin-right: 9px;
+  transition:background 0.16s;
+}
+.helpbox button:hover {background:#dbd2ff;}
+  </style>
+</head>
+<body>
+  <div class="board-container">
+    <div class="board-title">XSS 실습 게시판 (이벤트 기반 XSS 가능!)</div>
+    <div class="board-desc">
+      <b>검색창</b>에 이벤트 XSS 페이로드(<code>&lt;img src=x onerror=alert(1)&gt;</code> 등)를 넣고 동작을 확인해 보세요!<br>
+      <b>설명:</b> 최신 브라우저는 &lt;script&gt; 태그는 실행 안 되지만, &lt;img ... onerror=...&gt;로는 XSS가 터집니다.
+    </div>
+    <form class="board-search" onsubmit="searchBoard(); return false;">
+      <input type="text" id="searchInput" placeholder='예: <img src=x onerror=alert(1)>'>
+      <button type="button" onclick="searchBoard()">검색</button>
+    </form>
+
+    <!-- 검색어 결과(XSS 실습용 innerHTML 즉시코드삽입) -->
+    <div id="searchDisplay" style="margin:16px 0; color:red;"></div>
+
+    <a href="index.html" class="btn write-button">글쓰기</a>
+    <table class="board-table">
+      <thead>
+        <tr>
+          <th style="width:35%">제목</th>
+          <th style="width:15%">작성자</th>
+          <th style="width:15%">날짜</th>
+        </tr>
+      </thead>
+      <tbody id="boardList">
+        <tr>
+          <td class="title">이벤트 이벤트 기반 XSS 예시</td>
+          <td class="writer">관리자</td>
+          <td>2024-06-01</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="helpbox">
+    <div class="help-slide active" id="slide1">
+      <h3>🔰 초보자를 위한 도움말</h3>
+      <ul>
+        <li>
+          <b>&lt;img src=x onerror=alert(1)&gt;</b>를 검색창에 넣고<br>
+          검색 버튼을 누르면 알림 창이 나와요! (XSS 성공)
+        </li>
+        <li>
+          <b>&lt;script&gt;alert('XSS')&lt;/script&gt;</b>는 최신 브라우저에서는 실행되지 않습니다.<br>
+          대신 onerror 등 "이벤트 기반 XSS"를 사용하세요.
+        </li>
+        <li>
+          <b>XSS란?</b> 공격자가 악성 JS코드를 입력해서 남의 브라우저에서 실행시키는 공격이에요.
+        </li>
+      </ul>
+    </div>
+    <div class="help-slide" id="slide2" style="display:none">
+      <h3>🔒 XSS 이렇게 막으세요!</h3>
+      <ul>
+        <li><b>textContent로만 보여주기(최고 안전)</b></li>
+        <li><b>innerHTML로 출력할 땐 반드시 이스케이프 처리!</b></li>
+      </ul>
+      <button onclick="showSlide(0)" id="prevBtn" disabled>&lt; 이전</button>
+      <button onclick="showSlide(1)" id="nextBtn">&gt; 다음</button>
+    </div>
+    <button onclick="document.getElementById('slide1').style.display='block';document.getElementById('slide2').style.display='none'">XSS란?</button>
+    <button onclick="document.getElementById('slide1').style.display='none';document.getElementById('slide2').style.display='block'">XSS 방어법</button>
+  </div>
+
+  <script>
+    function searchBoard() {
+      var inputVal = document.getElementById("searchInput").value;
+      // innerHTML로 출력 => XSS 페이로드 HTML로 insert됨
+      document.getElementById("searchDisplay").innerHTML = '검색어: ' + inputVal;
+    }
+    // 도움말 슬라이드
+    function showSlide(idx) {
+      document.getElementById('slide1').style.display = (idx===0?"block":"none");
+      document.getElementById('slide2').style.display = (idx===1?"block":"none");
+    }
+  </script>
+</body>
+</html>

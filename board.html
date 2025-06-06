@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>XSS 실습 게시판</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700&display=swap" rel="stylesheet">
+  <style>
+body {
+  background: #f9fafb;
+  font-family: 'Montserrat', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  color: #2e2a45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.board-container {
+  max-width: 720px;
+  width: 100%;
+  background: white;
+  margin-top: 50px;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px 0 rgba(94,94,166,0.09);
+  padding: 2.5rem 1.6rem 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.helpbox {
+  background:#f2f6ff;
+  border-left:5px solid #6ca1f7;
+  padding:18px;
+  padding-bottom:52px;     /* 👈 아래로 더 밀어 줍니다! */
+  margin:24px 0 24px 0;
+  border-radius:10px;
+  color:#24315e;
+  width:100%;
+  box-sizing:border-box;
+  min-height:180px;
+  position: relative;
+}
+.helpbox .slide-btns {
+  position: absolute;
+  bottom: 16px;            /* 여기 값도 필요에 따라 조정 (예: 24px) */
+  left: 0; right: 0; margin: 0 auto; text-align: center;
+}
+
+.helpbox button {
+  border-radius: 8px;
+  border: none;
+  padding: 5px 13px;
+  font-size: 1em;
+  margin: 0 2px;
+  cursor: pointer;
+  background: #93bfff;
+  color: #24315e;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.helpbox button:hover {
+  background: #678dfa;
+  color: #fff;
+}
+.help-slide {display: none;}
+.help-slide.active {display: block;}
+  /* 이하 기존 스타일 동일 */
+.board-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 30px;
+}
+.board-title-row h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #24315e;
+  margin: 0;
+}
+.btn {
+  font-family: inherit;
+  border: none;
+  background: rgb(164, 199, 255);
+  color: #24315e;
+  font-weight: 700;
+  border-radius: 16px;
+  padding: 0.6em 1.3em;
+  cursor: pointer;
+  box-shadow: 0 4px #b3c7e0;
+  transition: background 0.2s, color 0.2s;
+  font-size: 1.02rem;
+}
+.btn:hover {
+  background: rgb(195, 222, 255);
+  color: #375394;
+}
+.board-list { list-style:none; margin:0; padding:0; width:100%; }
+.board-list-header { font-weight:bold; background:#f8f8f8; }
+.board-list li { display:flex; border-bottom:1px solid #eee; align-items:center; }
+.board-list li span { display:inline-block; padding:8px 4px; }
+.num { text-align:center; }
+.title { flex:1; }
+.writer, .date { text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="board-container">
+    <!-- 🌟 초보자를 위한 도움말(슬라이드2개) -->
+    <div class="helpbox">
+      <div class="help-slide active" id="slide1">
+        <h3>🔰 초보자를 위한 도움말</h3>
+        <ul>
+          <li>
+            &lt;img src=x onerror=alert(1)&gt;를 넣고 동작을 확인해 보세요!<br>
+            실제로 경고창이 뜨면 이 게시판엔 <b>XSS 취약점</b>이 있습니다!
+          </li>
+          <div class="board-desc">
+      <b>설명:</b> 최신 브라우저는 &lt;script&gt; 태그는 실행 안 되지만, &lt;img ... onerror=...&gt;로는 XSS가 터집니다.
+    </div>
+          <li>
+            <b>XSS란?</b> 공격자가 악성 JS코드를 입력해 남의 브라우저에서 실행시키는 공격이에요.
+          </li>
+          <li>
+            <b>실습 팁:</b> 최신 크롬/엣지 브라우저는 alert팝업을 자동 차단할 수 있어요.<br>
+          </li>
+          <li>
+            <b>실무에서는 반드시 이런 취약점을 막아야 해요!</b> 지금은 실습용이니 마음껏 해보세요.
+          </li>
+        </ul>
+      </div>
+      <div class="help-slide" id="slide2">
+        <h3>🔒 XSS 취약점 이렇게 막으세요!</h3>
+        <ul>
+          <li><b>1. <code>textContent</code>로만 출력하기</b><br>
+            <code>현재 코드 : document.getElementById("searchDisplay").innerHTML = '검색어: ' + inputVal;</code>
+            <code>element.textContent = 사용자입력값;</code>
+          </li>
+          <li><b>2. <code>innerHTML</code>로 출력할 땐 반드시 이스케이프 처리!</b><br>
+            <code>
+function escapeHTML(str) {<br>
+  &nbsp;&nbsp;return str.replace(/&amp;/g,"&amp;amp;")<br>
+  &nbsp;&nbsp;.replace(/&lt;/g,"&amp;lt;")<br>
+  &nbsp;&nbsp;.replace(/&gt;/g,"&amp;gt;")<br>
+  &nbsp;&nbsp;.replace(/"/g,"&amp;quot;")<br>
+  &nbsp;&nbsp;.replace(/'/g,"&amp;#39;");<br>
+}<br>
+el.innerHTML = escapeHTML(입력값);
+            </code>
+          </li>
+          <li>
+            <b>3. 실무에서는 항상 XSS 테스트/점검 필수</b>
+          </li>
+          <li style="color:#e43c88"><b>경고: 실제 서비스는 반드시 방어코드 적용!</b></li>
+        </ul>
+      </div>
+      <div class="slide-btns">
+        <button onclick="showSlide(0)" id="prevBtn" disabled>&lt; 이전</button>
+        <button onclick="showSlide(1)" id="nextBtn">&gt; 다음</button>
+      </div>
+    </div>
+    <div class="board-title-row">
+      <h2>XSS 실습 게시판</h2>
+      <a href="index.html" class="btn write-button">글쓰기</a>
+    </div>
+    <!-- 검색 입력창+셀렉트 추가 -->
+    <div style="margin:16px 0;">
+      <input type="text" id="searchInput" placeholder="검색어를 입력하세요" oninput="searchBoard()">
+      <select id="searchType" onchange="searchBoard()">
+        <option value="title">제목</option>
+        <option value="writer">작성자</option>
+      </select>
+    </div>
+    <ul class="board-list">
+      <li class="board-list-header">
+        <span class="num" style="width:50px;">번호</span>
+        <span class="title">제목</span>
+        <span class="writer" style="width:100px;">작성자</span>
+        <span class="date" style="width:110px;">날짜</span>
+      </li>
+      <li>
+        <span class="num" style="width:50px;">1</span>
+        <span class="title">
+          <a href="#" class="board-title-link">웹 해킹 실습</a>
+        </span>
+        <span class="writer" style="width:100px;">초보자</span>
+        <span class="date" style="width:110px;">2025-05-26</span>
+      </li>
+      <li>
+        <span class="num" style="width:50px;">2</span>
+        <span class="title">
+          <a href="#" class="board-title-link">보안 이슈 토론</a>
+        </span>
+        <span class="writer" style="width:100px;">홍길동</span>
+        <span class="date" style="width:110px;">2025-05-25</span>
+      </li>
+       <li>
+        <span class="num" style="width:50px;">3</span>
+        <span class="title">
+          <a href="#" class="board-title-link">리버스엔지니어링</a>
+        </span>
+        <span class="writer" style="width:100px;">김민재</span>
+        <span class="date" style="width:110px;">2025-05-27</span>
+      </li>
+       <li>
+        <span class="num" style="width:50px;">4</span>
+        <span class="title">
+          <a href="#" class="board-title-link">반사 XSS</a>
+        </span>
+        <span class="writer" style="width:100px;">박민서</span>
+        <span class="date" style="width:110px;">2025-05-26</span>
+      </li>
+       <li>
+        <span class="num" style="width:50px;">5</span>
+        <span class="title">
+          <a href="#" class="board-title-link">비박스 환경을 활용한 웹 모의해킹 완벽 실습</a>
+        </span>
+        <span class="writer" style="width:100px;">이승준</span>
+        <span class="date" style="width:110px;">2025-06-01</span>
+      </li>
+    </ul>
+    <!-- 검색어 출력(XSS 실습용: innerHTML 즉시코드삽입) -->
+    <div id="searchDisplay" style="margin:16px 0; color:red;"></div>
+  </div>
+  <script>
+    // 슬라이드 도움말 전환
+    function showSlide(idx) {
+      var slides = document.querySelectorAll('.help-slide');
+      slides.forEach(function(slide,i){slide.classList.toggle('active',i===idx);});
+      document.getElementById('prevBtn').disabled = idx===0;
+      document.getElementById('nextBtn').disabled = idx===slides.length-1;
+    }
+    // 검색 기능 (XSS 실습용: 취약상태!)
+    function searchBoard() {
+      var inputVal = document.getElementById("searchInput").value;
+      var type = document.getElementById("searchType").value;
+      var items = document.querySelectorAll(".board-list li:not(.board-list-header)");
+      document.getElementById("searchDisplay").innerHTML = '검색어: ' + inputVal;
+      items.forEach(function(item) {
+        var text = "";
+        if(type === "title") {
+          text = item.querySelector(".title").textContent.toLowerCase();
+        } else {
+          text = item.querySelector(".writer").textContent.toLowerCase();
+        }
+        item.style.display = text.includes(inputVal.toLowerCase()) ? "" : "none";
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Injection Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .sql-demo-box {
+            margin: 30px 0 10px 0;
+            padding: 22px 34px;
+            background: #fff;
+            border: 1px solid rgb(8, 45, 2);
+            border-radius: 16px;
+            width: 440px;
+            box-shadow: 0 2px 8px #22336611;
+        }
+        .sql-demo-box input {
+            width: 338px;
+            font-size: 1.12rem;
+            padding: 7px 10px;
+            border: 1px solid #789;
+            border-radius: 6px;
+        }
+        .sql-demo-box button {
+            padding: 7px 18px;
+            background: #3c5c2a;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1.06rem;
+        }
+        .sql-demo-box .query {
+            font-family: monospace;
+            background: #d5ecd4;
+            padding: 7px 10px;
+            margin: 20px 0 3px 0;
+            border-radius: 7px;
+            color: #1b212c;
+            word-break: keep-all;
+        }
+        .table-wrap {
+            width: 560px;
+            margin-bottom: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            font-size: 1.08rem;
+        }
+        th, td {
+            border: 1px solid #b1d5bf;
+            padding: 9px 6px;
+            text-align: left;
+        }
+        th {
+            background: #d0e7c8;
+        }
+        tr:nth-child(even) td {
+            background: #fcfdff;
+        }
+        .help {
+            width: 440px;
+            background: #ffeef4;
+            border-radius: 12px;
+            padding: 17px 21px 7px 21px;
+            font-size: 1.01rem;
+            margin-bottom:25px;
+        }
+    </style>
+    <style>
+.help-slide { display: none; }
+.help-slide.active { display: block; }
+.db-table {
+  border-collapse: collapse;
+  margin: 24px auto 30px auto;
+  min-width: 600px;
+  background: #f6fff6;
+  box-shadow: 0 2px 8px #d4efd4a0;
+  font-size: 15px;
+  border: 1.5px solid #95d690;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.db-table th {
+  background: #abeda4;
+  color: #225728;
+  padding: 9px 12px;
+  border-bottom: 2px solid #97db85;
+  letter-spacing: 1px;
+}
+.db-table td {
+  padding: 8px 12px;
+  text-align: center;
+  border-bottom: 1px solid #d1eed1;
+  color: #2e6333;
+  word-break: break-all;
+}
+.db-table tr:last-child td {
+  border-bottom: none;
+}
+.slide-btns {
+  text-align: center;
+  margin-top: 8px;
+}
+.slide-btns button {
+  margin: 0 3px;
+  padding: 4px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #bfe9a3;
+  color: #1c366b;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.slide-btns button:active {
+  background: #bfe9a3;
+  color: #fff;
+}
+.slide-btns button:disabled {
+  background: #d2ecc2c1;
+  color: #b2bfd7;
+  cursor: not-allowed;
+}
+.helpbox {
+  width: 530px;
+  height : 300px;
+  margin: 38px auto 28px auto;
+  background: #e3ffd1c1;
+  border-radius: 13px;
+  padding: 18px 24px 6px 24px;
+  box-shadow: 0 2px 7px rgba(146, 255, 100, 0.07);
+}
+.helpbox h3 {
+  margin:0 0 8px 0;
+}
+.helpbox ul {
+  padding-left:15px;
+  margin:0;
+  color:#3c5c2a;
+}
+.helpbox code {
+  background: #c4ebbc;
+  border-radius: 4px;
+  padding: 0 3px;
+}
+form {
+  border: 2px solid rgb(8, 45, 2);
+  width: 500px;
+  margin: 0 auto;
+}
+    </style>
+</head>
+<body>
+     <!-- 슬라이드 도움말 START -->
+<div class="helpbox">
+  <div class="help-slide active" id="slide1">
+    <h3>🔰 초보자를 위한 도움말</h3>
+    <ul>
+      <li>
+        <b>SQL Injection 이란?</b> 사용자가 입력한 값을 서버에서 검증하지 않고 데이터베이스 쿼리 일부분으로 인식하여 데이터베이스의 정보가 노출되거나 인증이 우회되는 취약점이에요.<br>
+       <br>
+      </li>
+      <b>🔑 SQL 인젝션 실습 안내:</b><br>
+        1. 평범하게 회원이름으로 검색하면 해당 회원이름만 나옵니다.<br>
+        2. <b><code>' OR 1=1 --</code></b>를 입력해 보세요.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;모든 회원 정보가 다 나옵니다 (=SQL 인젝션 성공).<br>
+        3. 실제 SQL 쿼리가 어떻게 만들어지는지 확인하세요.<br>
+        <br>
+        <b>실제 서비스에서는 이렇게 입력값을 직접 SQL에 넣으면 <span style="color:red;">절대 안 됩니다!</span></b>
+    </ul>
+  </div>
+  
+</div>
+<!-- 슬라이드 도움말 END -->
+
+
+    <div class="header"></div>
+    </div>
+    <div class="sql-demo-box">
+        <div><b>회원이름</b>으로 검색합니다.</div>
+<div style="margin-top:8px;">
+  <input id="searchInput" placeholder="예) hong" style="width:338px;">
+  <button onclick="searchBoard()" style="margin-left:8px;">검색</button>
+</div>
+
+        <div class="query" id="sqlQuery"></div>
+    </div>
+      <h1>현재 회원 데이터베이스</h1>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:20%;">회원이름(ID)</th>
+                    <th style="width:22%;">비밀번호</th>
+                    <th style="width:58%;">이메일</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+        </table>
+    </div>
+
+
+    <script>
+        // 회원 데이터
+        const usersData = [
+            { username: "hong", password: "hongpass123" , email : "hong@sample.com"},
+            { username: "kim22", password: "kimpw2025", email : "kim22@sample.com" },
+            { username: "lee33", password: "manager054", email : "lee33@sample.com" },
+            { username: "JUN046", password: "history041", email : "JUN046@sample.com" },
+            { username: "ELLA", password: "enfr88", email : "ELLA@sample.com" }
+        ];
+
+        function searchBoard() {
+            const inputVal = document.getElementById('searchInput').value;
+            // 1. 시뮬레이션: 입력값을 그대로 SQL문에 "취약"하게 끼워넣음
+            // 실제 SQL 구문처럼 화면에 보여줌
+            const query = `SELECT * FROM users WHERE username = '${inputVal}'`;
+            document.getElementById('sqlQuery').textContent = query;
+
+            // 2. 결과 시뮬레이션 (취약하게 파싱: ' OR 1=1 -- 으로 전체 반환)
+            let result;
+            // 실제 인젝션 공격 : '~' OR 1=1 -- 형태인 경우 전체검색
+            if(/('|")\s*or\s*1\s*=\s*1\s*--?/i.test(inputVal)) {
+                result = usersData; // 인젝션 성공, 전체 검색
+            } else {
+                // 평범한 경우: username이 정확히 일치하는 회원만 반환
+                result = usersData.filter(b => b.username === inputVal);
+            }
+            showResults(result);
+        }
+
+        function showResults(data) {
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '';
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#888;">검색 결과 없음</td></tr>`;
+                return;
+            }
+            data.forEach(row => {
+                tbody.innerHTML += `<tr><td>${row.username}</td><td>${row.password}</td><td>${row.email}</td></tr>`;
+            });
+        }
+
+
+    </script>
+</body>
+</html>
